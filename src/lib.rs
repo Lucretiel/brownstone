@@ -95,8 +95,8 @@ where
 /// called once for each item in the length of the array, and the completed
 /// array is returned.
 ///
-/// Each time the method is called, it is provided with context in the form of
-/// the prefix of the array that has already been initialized.
+/// Each time the method is called, it is provided with the index of the
+/// element being produced.
 #[inline]
 pub fn build_indexed<T, F, const N: usize>(mut next_value: F) -> [T; N]
 where
