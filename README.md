@@ -1,2 +1,2 @@
-# array-builder
-A library for constructing statically sized arrays
+# brownstone
+A library for safely constructing statically sized arrays
