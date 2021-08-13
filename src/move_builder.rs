@@ -1,5 +1,5 @@
 /*!
-A misuse-immune array builder
+A misuse-immune array builder.
 */
 
 use crate::builder;

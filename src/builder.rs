@@ -21,8 +21,9 @@ pub enum PushResult {
     Full,
 }
 
-/// Low-level builder type for `[T; N]` arrays. Uses a [`push`] + [`finish`]
-/// interface to build an array 1 element at a time.
+/// Low-level builder type for `[T; N]` arrays. Uses a [`push`][ArrayBuilder::push]
+/// + [`finish`][ArrayBuilder::finish] interface to build an array 1 element
+/// at a time.
 ///
 /// The interface provided by this type is fairly low level; most of its
 /// methods are fallible in some way (returning a [`Result`] or panicking on
