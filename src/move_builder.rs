@@ -54,14 +54,22 @@ impl<T, const N: usize> ArrayBuilder<T, N> {
     /// to become fully initialzed, the array is returned; otherwise, the
     /// builder is returned.
     #[inline]
-    pub fn push(mut self, value: T) -> PushResult<T, N> {
+    pub fn push(self, value: T) -> PushResult<T, N> {
+        // Destructure self to ensure that an ArrayBuilder never exists with
+        // a full array
+        let mut builder = self.builder;
+
         // The unsafes here have debug_asserts checking their correctness.
-        // Invariant preserved: if this push fills the array, the array is
-        // returned.
-        match unsafe { self.builder.push_unchecked(value) } {
-            builder::PushResult::NotFull => PushResult::NotFull(self),
+
+        // Invariant presumed: the array is not full, so this push is safe
+        match unsafe { builder.push_unchecked(value) } {
+            // Invariant preserved: We only create a new ArrayBuilder if the
+            // array is not full yet
+            builder::PushResult::NotFull => PushResult::NotFull(Self { builder }),
             builder::PushResult::Full => {
-                PushResult::Full(unsafe { self.builder.finish_unchecked() })
+                // Invariant preserved: if this push fills the array, the array
+                // is returned immediately
+                PushResult::Full(unsafe { builder.finish_unchecked() })
             }
         }
     }
