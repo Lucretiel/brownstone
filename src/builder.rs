@@ -47,6 +47,8 @@ impl<T, const N: usize> ArrayBuilder<T, N> {
     /**
     Create a new, empty `ArrayBuilder`.
     */
+    #[inline]
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             vec: ArrayVec::new_const(),
@@ -58,6 +60,7 @@ impl<T, const N: usize> ArrayBuilder<T, N> {
     builder is full, the next call to `finish` will return the built array.
     */
     #[inline]
+    #[must_use]
     pub fn is_full(&self) -> bool {
         self.vec.is_full()
     }
@@ -66,6 +69,7 @@ impl<T, const N: usize> ArrayBuilder<T, N> {
     Returns true if no elements in the array are initialized.
     */
     #[inline]
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.vec.is_empty()
     }
@@ -74,6 +78,7 @@ impl<T, const N: usize> ArrayBuilder<T, N> {
     Returns the number of initialized elements in the array.
     */
     #[inline]
+    #[must_use]
     pub fn len(&self) -> usize {
         self.vec.len()
     }
@@ -81,6 +86,8 @@ impl<T, const N: usize> ArrayBuilder<T, N> {
     /**
     Get a PushResult after a push. Indicates if the array is full or not.
     */
+    #[inline]
+    #[must_use]
     fn push_result(&self) -> PushResult {
         match self.len() >= N {
             true => PushResult::Full,
@@ -110,10 +117,12 @@ impl<T, const N: usize> ArrayBuilder<T, N> {
     */
     #[inline]
     pub fn try_push(&mut self, value: T) -> Result<PushResult, Overflow<T>> {
-        self.vec
-            .try_push(value)
-            .map(|()| self.push_result())
-            .map_err(|err| Overflow(err.element()))
+        // We could avoid the unsafe and use try_push, but we'd prefer to
+        // contain the logic as much as possible
+        match self.vec.is_full() {
+            false => Ok(unsafe { self.push_unchecked(value) }),
+            true => Err(Overflow(value)),
+        }
     }
 
     /**
@@ -141,7 +150,7 @@ impl<T, const N: usize> ArrayBuilder<T, N> {
     /// This must only be called when the builder is full.
     #[inline]
     pub unsafe fn finish_unchecked(self) -> [T; N] {
-        debug_assert!(self.vec.len() == N);
+        debug_assert!(self.is_full());
         self.vec.into_inner_unchecked()
     }
 
@@ -151,7 +160,10 @@ impl<T, const N: usize> ArrayBuilder<T, N> {
     */
     #[inline]
     pub fn try_finish(self) -> Result<[T; N], Self> {
-        self.vec.into_inner().map_err(|vec| Self { vec })
+        match self.is_full() {
+            true => Ok(unsafe { self.finish_unchecked() }),
+            false => Err(self),
+        }
     }
 
     /**
@@ -173,6 +185,7 @@ impl<T, const N: usize> ArrayBuilder<T, N> {
     Get the slice of the array that has already been initialized.
     */
     #[inline]
+    #[must_use]
     pub fn finished_slice(&self) -> &[T] {
         self.vec.as_slice()
     }
@@ -181,6 +194,7 @@ impl<T, const N: usize> ArrayBuilder<T, N> {
     Get the mutable slice of the array that has already been initialized.
     */
     #[inline]
+    #[must_use]
     pub fn finished_slice_mut(&mut self) -> &mut [T] {
         self.vec.as_mut_slice()
     }

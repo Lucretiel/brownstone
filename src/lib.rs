@@ -99,7 +99,7 @@ macro_rules! build {
     (|$prefix:ident : &[$type:ty]| $item:expr $(; $len:expr)?) => {{
         use $crate::move_builder::{ArrayBuilder, PushResult};
 
-        let mut builder = ArrayBuilder $(::< _, $len >)? ::start();
+        let mut builder = ArrayBuilder $(::< $type, $len >)? ::start();
 
         loop {
             builder = match builder {
@@ -113,19 +113,11 @@ macro_rules! build {
         }
     }};
 
-    (|prefix| $item:expr $(; $len:expr)?) => {
-        $crate::build!(|prefix: &[_]| $item $(; $len)?)
-    };
-
     (|$index:ident : usize| $item:expr $(; $len:expr)?) => {
         $crate::build!(|prefix: &[_]| {
             let $index = prefix.len();
             $item
         } $(; $len)?)
-    };
-
-    (|index| $item:expr $(; $len:expr)?) => {
-        $crate::build!(|index: usize| $expr $(; $len)?)
     };
 
     ($item:expr $(; $len:expr)?) => {
